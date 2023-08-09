@@ -1,0 +1,10 @@
+extends base
+
+block content
+  .main
+    form(style="display: grid; gap: 10px" method="post" action=`${path}`)
+      if error
+        p(style="color: var(--danger); font-weight: bold; text-align: center")= error
+      div(style="display: grid; gap: 10px")
+        input(type="password" name="passkey" placeholder="pass key" required)
+        button.btn(type="submit") submit
