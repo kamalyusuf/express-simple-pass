@@ -75,7 +75,7 @@ export const simplepass = ({
         );
 
       if (passkey !== PASS_KEY)
-        return res.render(view("pass"), { error: "incorrect pass key" });
+        return res.render(view("pass"), { error: "incorrect pass key", path });
 
       if (req.session) req.session.pass = true;
 

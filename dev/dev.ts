@@ -17,11 +17,13 @@ app.use(
 
 simplepass({
   app,
-  redirect: "/",
-  passkey: "simple"
+  redirect: "/passed",
+  passkey: "pass"
 });
 
-app.get("/", usepass, (_req, res) => res.send("passed"));
+app.get("/", (_req, res) => res.send("/"));
+
+app.get("/passed", usepass, (_req, res) => res.send("passed"));
 
 app.use(
   (
@@ -38,7 +40,7 @@ app.use(
 require("express-list-routes")(app);
 
 (() => {
-  const port = process.env.PORT as string;
+  const port = 8000;
 
   app.listen(port, () => {
     console.log(`app on http://localhost:${port}`);
