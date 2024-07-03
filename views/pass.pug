@@ -1,10 +1,32 @@
 extends base
 
 block content
-  .main
-    form(style="display: grid; gap: 10px" method="post" action=`${path}`)
-      if error
-        p(style="color: var(--danger); font-weight: bold; text-align: center")= error
-      div(style="display: grid; gap: 10px")
-        input(type="password" name="passkey" placeholder="pass key" required)
-        button.btn(type="submit") submit
+  - const path = redirect || "";
+  form(
+    style="padding-top: 4rem",
+    method="post",
+    action=`${rootpath}?redirect=${path}`
+  )
+    div.m1
+      div.m2
+        div.m3
+          h3.title authentication
+          p(style="font-size: 0.875rem; line-height: 1.25rem") enter the
+            |
+            | passkey to continue
+        div(style="padding: 0 1.5rem")
+          div
+            input#passkey(
+              type="password",
+              name="passkey",
+              placeholder="enter the passkey",
+              required,
+              autofocus
+            )
+            if error
+              p.msg(style="color: #dc2626")= error
+            if un
+              p.msg(style="color: #059669") unpassed
+        div(style="padding: 1.2rem 1.5rem 1.5rem; display: grid; gap: 10px")
+          button.submit(type="submit") submit
+          a.unpass(href=`${rootpath}/un`, style="justify-self: end") unpass

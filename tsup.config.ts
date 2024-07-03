@@ -2,8 +2,12 @@ import { defineConfig } from "tsup";
 
 export default defineConfig({
   entry: ["dev/dev.ts"],
-  format: ["cjs"],
+  format: "esm",
   watch: ["dev", "src"],
   outDir: "build",
-  onSuccess: "node -r dotenv/config build/dev.js"
+  onSuccess: "tsc && node build/dev.js",
+  bundle: false,
+  splitting: false,
+  clean: true,
+  platform: "node"
 });

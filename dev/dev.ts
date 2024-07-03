@@ -1,48 +1,25 @@
-import "express-async-errors";
 import express from "express";
-import cookiesession from "cookie-session";
-import { simplepass, usepass } from "../src";
+import { SimplePass } from "../dist/simple-pass.js";
 
 const app = express();
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
-app.use(
-  cookiesession({
-    signed: false,
-    secure: false,
-    maxAge: 300000
-  })
-);
-
-simplepass({
-  app,
-  redirect: "/passed",
-  passkey: "pass"
+const simplepass = new SimplePass({
+  rootpath: "/pass",
+  verify: (passkey) => passkey === "kamal"
 });
+
+app.use(simplepass.router());
 
 app.get("/", (_req, res) => res.send("/"));
 
-app.get("/passed", usepass, (_req, res) => res.send("passed"));
-
-app.use(
-  (
-    error: Error,
-    _req: express.Request,
-    res: express.Response,
-    _next: express.NextFunction
-  ) => {
-    return res.status(500).send({ error: error.message });
-  }
+app.get(
+  "/passed",
+  (req, res, next) => simplepass.usepass(req, res, next),
+  (_req, res) => res.send("passed")
 );
 
-// eslint-disable-next-line
-require("express-list-routes")(app);
+const port = "8000";
 
-(() => {
-  const port = 8000;
-
-  app.listen(port, () => {
-    console.log(`app on http://localhost:${port}`);
-  });
-})();
+app.listen(+port, () => {
+  console.log(`🚀 http://localhost:${port}`);
+});

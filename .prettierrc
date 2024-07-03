@@ -5,5 +5,15 @@
   "singleQuote": false,
   "arrowParens": "always",
   "useTabs": false,
-  "endOfLine": "auto"
+  "endOfLine": "auto",
+  "plugins": ["@prettier/plugin-pug"],
+  "pugSingleQuote": false,
+  "pugUseTabs": false,
+  "pugTabWidth": 2,
+  "pugPrintWidth": 80,
+  "pugAttributeSeparator": "always",
+  "pugWrapAttributesThreshold": -1,
+  "pugEmptyAttributes": "none",
+  "pugClassLocation": "before-attributes",
+  "pugExplicitDiv": true
 }
