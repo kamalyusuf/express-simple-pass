@@ -15,7 +15,7 @@ interface SimplePassOptions {
 const COOKIE_NAME = Symbol("passed");
 
 export class SimplePass {
-  public readonly rootpath: string;
+  #rootpath: string;
 
   #app: express.Express;
 
@@ -26,7 +26,7 @@ export class SimplePass {
   constructor({ rootpath = "/simplepass", verify, cookie }: SimplePassOptions) {
     this.#app = express();
 
-    this.rootpath = rootpath;
+    this.#rootpath = rootpath;
     this.#verify = verify;
     this.#cookie = cookie ?? {};
   }
@@ -44,7 +44,7 @@ export class SimplePass {
   ) {
     if (!SimplePass.passed(req))
       return res.redirect(
-        `${this.rootpath}?redirect=${encodeURIComponent(req.originalUrl)}`
+        `${this.#rootpath}?redirect=${encodeURIComponent(req.originalUrl)}`
       );
 
     next();
@@ -60,19 +60,19 @@ export class SimplePass {
   #routes() {
     this.#route({
       method: "get",
-      path: `${this.rootpath}/un`,
+      path: `${this.#rootpath}/un`,
       handler: ({ req, res }) => {
         if (!SimplePass.passed(req)) throw new Error("not passed");
 
         res.clearCookie(String(COOKIE_NAME));
 
-        res.redirect(`${this.rootpath}?un=true`);
+        res.redirect(`${this.#rootpath}?un=true`);
       }
     });
 
     this.#route({
       method: "get",
-      path: this.rootpath,
+      path: this.#rootpath,
       handler: ({ req, res }) => {
         res.render(view("pass"), {
           redirect: req.query.redirect,
@@ -83,7 +83,7 @@ export class SimplePass {
 
     this.#route({
       method: "post",
-      path: this.rootpath,
+      path: this.#rootpath,
       handler: async ({ req, res }) => {
         const passkey = (req.body as Record<string, unknown>).passkey;
         const redirect = req.query.redirect as string | undefined;
@@ -113,7 +113,7 @@ export class SimplePass {
     this.#app.use(cookieparser());
 
     this.#app.use((_req, res, next) => {
-      res.locals.rootpath = this.rootpath;
+      res.locals.rootpath = this.#rootpath;
 
       next();
     });

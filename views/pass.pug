@@ -2,11 +2,9 @@ extends base
 
 block content
   - const path = redirect || "";
-  form(
-    style="padding-top: 4rem",
-    method="post",
-    action=`${rootpath}?redirect=${path}`
-  )
+  - const q = path ? `?redirect=${encodeURIComponent(path)}` : "";
+
+  form(style="padding-top: 4rem", method="post", action=`${rootpath}${q}`)
     div.m1
       div.m2
         div.m3
@@ -29,4 +27,4 @@ block content
               p.msg(style="color: #059669") unpassed
         div(style="padding: 1.2rem 1.5rem 1.5rem; display: grid; gap: 10px")
           button.submit(type="submit") submit
-          a.unpass(href=`${rootpath}/un`, style="justify-self: end") unpass
+          a.unpass(href=`${rootpath}/un${q}`, style="justify-self: end") unpass
