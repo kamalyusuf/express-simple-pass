@@ -12,12 +12,12 @@ interface SimplePassOptions {
   cookie?: CookieOptions;
 }
 
-const COOKIE_NAME = Symbol("passed");
+const COOKIE_NAME = `simplepass.passed`;
 
 export class SimplePass {
   #rootpath: string;
 
-  #app: express.Express;
+  #app: express.Application;
 
   #verify: (passkey: string) => boolean | Promise<boolean>;
 
@@ -110,7 +110,7 @@ export class SimplePass {
   #initialize() {
     this.#app.set("view engine", "pug");
     this.#app.use(express.urlencoded({ extended: true }));
-    this.#app.use(cookieparser());
+    this.#app.use(cookieparser() as express.RequestHandler);
 
     this.#app.use((_req, res, next) => {
       res.locals.rootpath = this.#rootpath;

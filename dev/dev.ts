@@ -10,12 +10,16 @@ const simplepass = new SimplePass({
 
 app.use(simplepass.router());
 
-app.get("/", (_req, res) => res.send("/"));
+app.get("/", (_req, res) => {
+  res.send("/");
+});
 
 app.get(
   "/passed",
   (req, res, next) => simplepass.usepass(req, res, next),
-  (_req, res) => res.send("passed")
+  (_req, res) => {
+    res.send("passed");
+  }
 );
 
 const port = "8000";
