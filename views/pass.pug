@@ -1,30 +1,28 @@
 extends base
 
-block content
+block children
   - const path = redirect || "";
   - const q = path ? `?redirect=${encodeURIComponent(path)}` : "";
 
-  form(style="padding-top: 4rem", method="post", action=`${rootpath}${q}`)
-    div.m1
-      div.m2
-        div.m3
-          h3.title authentication
-          p(style="font-size: 0.875rem; line-height: 1.25rem") enter the
-            |
-            | passkey to continue
-        div(style="padding: 0 1.5rem")
-          div
-            input#passkey(
-              type="password",
-              name="passkey",
-              placeholder="enter the passkey",
-              required,
-              autofocus
-            )
-            if error
-              p.msg(style="color: #dc2626")= error
-            if un
-              p.msg(style="color: #059669") unpassed
-        div(style="padding: 1.2rem 1.5rem 1.5rem; display: grid; gap: 10px")
-          button.submit(type="submit") submit
-          a.unpass(href=`${rootpath}/un${q}`, style="justify-self: end") unpass
+  div.container
+    div
+      h3.title authentication
+      p(style="font-size: 0.875rem; line-height: 1.25rem") enter the pass key to continue
+
+    form(method="post", action=`${rootpath}${q}`)
+      div
+        input#passkey(
+          type="password",
+          name="passkey",
+          placeholder="enter the pass key",
+          required,
+          autofocus
+        )
+        if error
+          p.message.error= error
+        if un
+          p.message.success unpassed
+
+      div(style="display: grid; gap: 10px")
+        button(type="submit") submit
+        a.unpass(href=`${rootpath}/un${q}`, style="justify-self: end") unpass

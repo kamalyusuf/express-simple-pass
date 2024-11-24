@@ -1,5 +1,5 @@
 import express from "express";
-import { SimplePass } from "../dist/simple-pass.js";
+import { SimplePass } from "../dist/index.js";
 
 const app = express();
 

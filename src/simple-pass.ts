@@ -2,14 +2,15 @@ import express from "express";
 import type { CookieOptions } from "express";
 import cookieparser from "cookie-parser";
 import { view } from "./utils.js";
+import path from "node:path";
+import fs from "node:fs";
 
 interface SimplePassOptions {
   verify: (passkey: string) => boolean | Promise<boolean>;
-  /**
-   * @default /simplepass
-   */
   rootpath?: `/${string}`;
   cookie?: CookieOptions;
+  css?: string;
+  title?: string;
 }
 
 const COOKIE_NAME = `simplepass.passed`;
@@ -23,12 +24,26 @@ export class SimplePass {
 
   #cookie: CookieOptions;
 
-  constructor({ rootpath = "/simplepass", verify, cookie }: SimplePassOptions) {
+  #css?: string;
+
+  #title?: string;
+
+  constructor({
+    rootpath = "/simplepass",
+    verify,
+    cookie,
+    css,
+    title
+  }: SimplePassOptions) {
     this.#app = express();
 
     this.#rootpath = rootpath;
     this.#verify = verify;
     this.#cookie = cookie ?? {};
+    this.#title = title;
+
+    if (css)
+      this.#css = path.isAbsolute(css) ? fs.readFileSync(css, "utf-8") : css;
   }
 
   static passed(req: express.Request): boolean {
@@ -114,6 +129,9 @@ export class SimplePass {
 
     this.#app.use((_req, res, next) => {
       res.locals.rootpath = this.#rootpath;
+
+      res.locals.css = this.#css;
+      res.locals.title = this.#title;
 
       next();
     });

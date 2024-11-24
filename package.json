@@ -15,7 +15,7 @@
   ],
   "scripts": {
     "lint": "eslint src --fix",
-    "build": "tsc",
+    "build": "tsc --noEmit && tsup-node --config build.config.ts",
     "prepublishOnly": "yarn run build",
     "dev": "tsup"
   },
