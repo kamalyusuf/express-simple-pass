@@ -4,8 +4,11 @@ import { SimplePass } from "../dist/index.js";
 const app = express();
 
 const simplepass = new SimplePass({
+  type: "passkey",
   rootpath: "/pass",
-  verify: (passkey) => passkey === "kamal",
+  verify(passkey) {
+    return passkey === "kamal";
+  },
   cookie: {
     secret: "superduperlongsecuresecret"
   }

@@ -3,40 +3,32 @@ import cookieparser from "cookie-parser";
 import { view } from "./utils.js";
 import path from "node:path";
 import fs from "node:fs";
-
-interface SimplePassOptions {
-  verify: (passkey: string) => boolean | Promise<boolean>;
-  rootpath?: `/${string}`;
-  cookie: { secret: string | string[] } & express.CookieOptions;
-  css?: string;
-  title?: string;
-  labels?: {
-    title?: string;
-    instruction?: string;
-    passkey_placeholder?: string;
-    unpass?: string;
-    unpassed?: string;
-  };
-}
+import type {
+  PassKeyAuthenticationFunction,
+  PassType,
+  SimplePassOptions
+} from "./types.js";
 
 const COOKIE_NAME = `simplepass.passed`;
 
-export class SimplePass {
+export class SimplePass<T extends PassType> {
   #rootpath: string;
+
+  #type: T;
 
   #app: express.Application;
 
-  #verify: SimplePassOptions["verify"];
+  #verify: SimplePassOptions<T>["verify"];
 
-  #secret: SimplePassOptions["cookie"]["secret"];
+  #secret: SimplePassOptions<T>["cookie"]["secret"];
 
   #cookie: express.CookieOptions;
 
-  #css?: SimplePassOptions["css"];
+  #css?: SimplePassOptions<T>["css"];
 
-  #title?: SimplePassOptions["title"];
+  #title?: SimplePassOptions<T>["title"];
 
-  #labels?: SimplePassOptions["labels"];
+  #labels?: SimplePassOptions<T>["labels"];
 
   constructor({
     rootpath = "/simplepass",
@@ -44,12 +36,14 @@ export class SimplePass {
     css,
     title,
     labels,
+    type,
     ...options
-  }: SimplePassOptions) {
+  }: SimplePassOptions<T>) {
     const { secret, ...cookie } = options.cookie;
 
     this.#app = express();
 
+    this.#type = type;
     this.#rootpath = rootpath;
     this.#verify = verify;
     this.#secret = secret;
@@ -122,15 +116,38 @@ export class SimplePass {
       method: "post",
       path: this.#rootpath,
       handler: async ({ req, res }) => {
-        const passkey = (req.body as Record<string, unknown>).passkey;
         const redirect = req.query.redirect as string | undefined;
 
-        if (typeof passkey !== "string") throw new Error("Passkey is required");
-
-        if (!(await this.#verify(passkey)))
-          throw new Error("Incorrect passkey");
-
         if (SimplePass.passed(req)) throw new Error("Already authenticated");
+
+        if (this.#type === "passkey") {
+          const passkey = (req.body as Record<string, unknown>).passkey;
+
+          if (typeof passkey !== "string")
+            throw new Error("Passkey is required");
+
+          const verify = this.#verify as PassKeyAuthenticationFunction;
+
+          if (!(await verify(passkey)))
+            return res.render(view("pass"), {
+              error: "Incorrect passkey",
+              passkey,
+              redirect: req.query.redirect
+            });
+        } else {
+          const { email, password } = req.body as Record<string, undefined>;
+
+          if (typeof email !== "string" || typeof password !== "string")
+            throw new Error("Email and password are required");
+
+          if (!(await this.#verify(email, password)))
+            return res.render(view("pass"), {
+              error: "Invalid credentials",
+              email,
+              password,
+              redirect: req.query.redirect
+            });
+        }
 
         res
           .cookie(String(COOKIE_NAME), "true", {
@@ -148,10 +165,11 @@ export class SimplePass {
   #initialize() {
     this.#app.set("view engine", "pug");
     this.#app.use(express.urlencoded({ extended: true }));
-    this.#app.use(cookieparser(this.#secret) as express.RequestHandler);
+    this.#app.use(cookieparser(this.#secret));
 
     this.#app.use((_req, res, next) => {
       res.locals.rootpath = this.#rootpath;
+      res.locals.type = this.#type;
       res.locals.css = this.#css;
       res.locals.title = this.#title;
       res.locals.labels = this.#labels ?? {};

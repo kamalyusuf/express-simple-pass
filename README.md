@@ -82,12 +82,42 @@ app.use(
 
 | Property   | Type                                                                                                         | Description                                                                                                                                                                     | Default Value                                                                                                                                                   |
 | ---------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `type`     | `"passkey" \| "email-password"`                                                                              | Specifies the authentication type. Determines the input fields and verification method.                                                                                         | **required**                                                                                                                                                    |
 | `verify`   | `(passkey: string) => boolean \| Promise<boolean>`                                                           | A function that takes a passkey as input and returns a boolean or a Promise that resolves to a boolean indicating whether the passkey is valid.                                 | **required**                                                                                                                                                    |
 | `rootpath` | `string`                                                                                                     | An optional string that specifies the root path for the middleware. It should start with a `/`.                                                                                 | N/A                                                                                                                                                             |
 | `cookie`   | `{ secret: string \| string[] } & express.CookieOptions`                                                     | An object that contains cookie options. The `secret` property is required and can be a string or an array of strings. The other properties are standard Express cookie options. | `{ maxAge: 12 * 60 * 60 * 1000 }`                                                                                                                               |
 | `css`      | `string`                                                                                                     | An optional string that specifies the path to a custom CSS file to style the login page.                                                                                        | N/A                                                                                                                                                             |
 | `title`    | `string`                                                                                                     | An optional string that specifies the title of the login page.                                                                                                                  | N/A                                                                                                                                                             |
 | `labels`   | `{ title?: string; instruction?: string; passkey_placeholder?: string; unpass?: string; unpassed?: string }` | Customize static text displayed on the authentication page. Defaults are provided if not specified                                                                              | `{ title: "Authentication", instruction: "Enter the pass key to continue", passkey_placeholder: "Enter the pass key", unpass: "Unpass", unpassed: "Unpassed" }` |
+
+## Authentication Types
+
+You can choose between two authentication types:
+
+### Passkey Authentication
+
+```typescript
+const simplepass = new SimplePass({
+  type: "passkey",
+  verify: (passkey) => argon2.verify(process.env.PASS_KEY_HASH, passkey)
+});
+```
+
+### Email + Password Authentication
+
+```typescript
+const simplepass = new SimplePass({
+  type: "email-password",
+  verify: async (email, password) => {
+    const admin = await User.findOne({
+      email,
+      role: "admin"
+    }).orFail();
+
+    return argon2.verify(admin.password_hash, password);
+  }
+});
+```
 
 ## API
 
@@ -126,7 +156,6 @@ Key css classes and ids you can target:
 }
 
 .instruction {
-  /* "Enter the pass key to continue" text */
 }
 
 form {
@@ -137,8 +166,14 @@ form button {
   /* Submit button */
 }
 
+.input {
+  /* Email/password/passkey input field */
+}
+
+#email,
+#password,
 #passkey {
-  /* Passkey input field */
+  /* Additional specific styling to email, password, and passkey inputs */
 }
 
 .message.error {

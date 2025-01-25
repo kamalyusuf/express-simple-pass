@@ -56,7 +56,7 @@ form button:active {
   transform: translateY(2px);
 }
 
-#passkey {
+.input {
   font-family: "Finlandica", sans-serif;
   border: 1px solid #ccc;
   font-size: 1rem;
