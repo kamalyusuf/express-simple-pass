@@ -5,12 +5,15 @@ const app = express();
 
 const simplepass = new SimplePass({
   rootpath: "/pass",
-  verify: (passkey) => passkey === "kamal"
+  verify: (passkey) => passkey === "kamal",
+  cookie: {
+    secret: "superduperlongsecuresecret"
+  }
 });
 
 app.use(simplepass.router());
 
-app.get("/", (_req, res) => {
+app.get("/", (req, res) => {
   res.send("/");
 });
 

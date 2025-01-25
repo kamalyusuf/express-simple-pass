@@ -1,27 +1,27 @@
 # express-simple-pass
 
-an express middleware for protecting admin UIs and dashboards with a simple password gate. perfect for securing monitoring tools, admin panels, and internal dashboards without implementing a full authentication system
+An express middleware for protecting admin UIs and dashboards with a simple password gate. Perfect for securing monitoring tools, admin panels, and internal dashboards without implementing a full authentication system
 
 ## Why?
 
-many packages like bull board, agendash, or swagger UI provide useful admin interfaces that need to be protected from public access. however, protecting these routes usually means you need to:
+Many packages like bull board, agendash, or swagger UI provide useful admin interfaces that need to be protected from public access. However, protecting these routes usually means you need to:
 
-- build custom login pages
-- handle form submissions
-- manage sessions/cookies
-- set up authentication routes
-- create template/views
+- Build custom login pages
+- Handle form submissions
+- Manage sessions/cookies
+- Set up authentication routes
+- Create template/views
 
-`express-simple-pass` eliminates all of this busywork. no need to build custom login pages, handle sessions, or manage authentication flows. just wrap your routes with the middleware, and you get a clean, functional password gate
+`express-simple-pass` eliminates all of this busywork. No need to build custom login pages, handle sessions, or manage authentication flows. Just wrap your routes with the middleware, and you get a clean, functional password gate
 
 ## Features
 
-- 🔒 simple password protection for any express route
-- 🎨 customizable login page with custom css support
-- 🍪 cookie-based authentication (no session setup needed)
-- ↩️ automatic redirect after authentication
-- 🔄 flexible password verification (supports any hashing method)
-- 📝 no need to create views or handle form submissions
+- 🔒 Simple password protection for any express route
+- 🎨 Customizable login page with custom css support
+- 🍪 Cookie-based authentication (no session setup needed)
+- ↩️ Automatic redirect after authentication
+- 🔄 Flexible password verification
+- 📝 No need to create views or handle form submissions
 
 ## Installation
 
@@ -35,7 +35,7 @@ pnpm add express-simple-pass
 
 ## Usage
 
-### basic example
+### Basic Example
 
 ```typescript
 import express from "express";
@@ -47,7 +47,10 @@ import argon2 from "argon2";
 const app = express();
 
 const simplepass = new SimplePass({
-  verify: (passkey) => argon2.verify(process.env.PASS_KEY_HASH, passkey)
+  verify: (passkey) => argon2.verify(process.env.PASS_KEY_HASH, passkey),
+  cookie: {
+    secret: "superduperlongsecuresecret"
+  }
 });
 
 app.use(simplepass.router());
@@ -61,9 +64,9 @@ app.use(
 app.listen(3000);
 ```
 
-### protecting routes
+### Protecting Routes
 
-you can use the `usepass` middleware to guard any route or set of routes. if a request hasn’t authenticated, they’ll be redirected to the authentication page
+You can use the `usepass` middleware to guard any route or set of routes. Ff a request hasn’t authenticated, they’ll be redirected to the authentication page
 
 ```typescript
 app.use(
@@ -73,76 +76,80 @@ app.use(
 );
 ```
 
-### configuration options
+### Configuration Options
 
 #### `SimplePassOptions`
 
-| Option     | Type                           | Default       | Description                                                                                      |
-|------------|--------------------------------|---------------|--------------------------------------------------------------------------------------------------|
-| `verify`   | `(passkey: string) => boolean or Promise<boolean>` | **required** | function to verify the passkey |
-| `rootpath` | `string`                      | `/simplepass` | root path for the authentication UI                                                           |
-| `cookie`   | `express.CookieOptions`               | `{ httpOnly: true, maxAge: 12 * 60 * 60 * 1000 }`          | options for the authentication cookie                                                         |
-| `css`      | `string`                      | `undefined`   | optional css string or file path for custom styles                                             |
-| `title`    | `string`                      | `Simple Pass`   | custom title for the authentication page                                                      |
+| Property   | Type                                                                                                         | Description                                                                                                                                                                     | Default Value                                                                                                                                                   |
+| ---------- | ------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `verify`   | `(passkey: string) => boolean \| Promise<boolean>`                                                           | A function that takes a passkey as input and returns a boolean or a Promise that resolves to a boolean indicating whether the passkey is valid.                                 | **required**                                                                                                                                                    |
+| `rootpath` | `string`                                                                                                     | An optional string that specifies the root path for the middleware. It should start with a `/`.                                                                                 | N/A                                                                                                                                                             |
+| `cookie`   | `{ secret: string \| string[] } & express.CookieOptions`                                                     | An object that contains cookie options. The `secret` property is required and can be a string or an array of strings. The other properties are standard Express cookie options. | `{ maxAge: 12 * 60 * 60 * 1000 }`                                                                                                                               |
+| `css`      | `string`                                                                                                     | An optional string that specifies the path to a custom CSS file to style the login page.                                                                                        | N/A                                                                                                                                                             |
+| `title`    | `string`                                                                                                     | An optional string that specifies the title of the login page.                                                                                                                  | N/A                                                                                                                                                             |
+| `labels`   | `{ title?: string; instruction?: string; passkey_placeholder?: string; unpass?: string; unpassed?: string }` | Customize static text displayed on the authentication page. Defaults are provided if not specified                                                                              | `{ title: "Authentication", instruction: "Enter the pass key to continue", passkey_placeholder: "Enter the pass key", unpass: "Unpass", unpassed: "Unpassed" }` |
 
 ## API
 
 ### `simplepass.router()`
 
-returns an express router that serves the authentication page and handles passkey verification
+Returns an express router that serves the authentication page and handles passkey verification
 
 ### `simplepass.usepass(req, res, next)`
 
-middleware to protect a route. redirects unauthenticated requests to the authentication page
+Middleware to protect a route. redirects unauthenticated requests to the authentication page
 
 ### `SimplePass.passed(req)`
 
-returns `true` if the request is authenticated
+Returns `true` if the request is authenticated
 
 ## Customization
 
-you can provide custom css for the authentication page via the `css` option. pass a string of css or an absolute path to a `.css` file:
+You can provide custom css for the authentication page via the `css` option. pass a string of css or an absolute path to a `.css` file:
 
 ```typescript
 const simplepass = new SimplePass({
-  verify: (passkey) => passkey === "my-secret",
   css: "C:/users/john/path/to/styles.css",
   title: "Admin Access"
 });
 ```
 
-key css classes and ids you can target:
+Key css classes and ids you can target:
 
 ```css
 .container {
-  /* main form container */
+  /* Main form container */
 }
 
 .title {
-  /* "authentication" title */
+  /* "Authentication" title */
+}
+
+.instruction {
+  /* "Enter the pass key to continue" text */
 }
 
 form {
-  /* form element - controls layout of inputs and buttons */
+  /* Form element - controls layout of inputs and buttons */
 }
 
 form button {
-  /* submit button */
+  /* Submit button */
 }
 
 #passkey {
-  /* passkey input field */
+  /* Passkey input field */
 }
 
 .message.error {
-  /* error message styling */
+  /* Error message styling */
 }
 
 .message.success {
-  /* success message styling */
+  /* Success message styling */
 }
 
 .unpass {
-  /* unpass/logout link */
+  /* Unpass/logout link */
 }
 ```

@@ -1,5 +1,4 @@
 import express from "express";
-import type { CookieOptions } from "express";
 import cookieparser from "cookie-parser";
 import { view } from "./utils.js";
 import path from "node:path";
@@ -8,9 +7,16 @@ import fs from "node:fs";
 interface SimplePassOptions {
   verify: (passkey: string) => boolean | Promise<boolean>;
   rootpath?: `/${string}`;
-  cookie?: CookieOptions;
+  cookie: { secret: string | string[] } & express.CookieOptions;
   css?: string;
   title?: string;
+  labels?: {
+    title?: string;
+    instruction?: string;
+    passkey_placeholder?: string;
+    unpass?: string;
+    unpassed?: string;
+  };
 }
 
 const COOKIE_NAME = `simplepass.passed`;
@@ -20,36 +26,52 @@ export class SimplePass {
 
   #app: express.Application;
 
-  #verify: (passkey: string) => boolean | Promise<boolean>;
+  #verify: SimplePassOptions["verify"];
 
-  #cookie: CookieOptions;
+  #secret: SimplePassOptions["cookie"]["secret"];
 
-  #css?: string;
+  #cookie: express.CookieOptions;
 
-  #title?: string;
+  #css?: SimplePassOptions["css"];
+
+  #title?: SimplePassOptions["title"];
+
+  #labels?: SimplePassOptions["labels"];
 
   constructor({
     rootpath = "/simplepass",
     verify,
-    cookie,
     css,
-    title
+    title,
+    labels,
+    ...options
   }: SimplePassOptions) {
+    const { secret, ...cookie } = options.cookie;
+
     this.#app = express();
 
     this.#rootpath = rootpath;
     this.#verify = verify;
-    this.#cookie = cookie ?? {};
+    this.#secret = secret;
+    this.#cookie = cookie;
     this.#title = title;
+    this.#labels = labels;
 
     if (css)
       this.#css = path.isAbsolute(css) ? fs.readFileSync(css, "utf-8") : css;
   }
 
   static passed(req: express.Request): boolean {
-    const cookies = req.cookies as Record<string, string>;
+    const cookies = req.signedCookies as undefined | Record<string, any>;
 
-    return cookies[String(COOKIE_NAME)] === "true";
+    if (cookies === undefined)
+      throw new Error(
+        "Cookies are undefined. Ensure that the cookie-parser middleware is applied"
+      );
+
+    if (!cookies[COOKIE_NAME]) return false;
+
+    return cookies[COOKIE_NAME] === "true";
   }
 
   usepass(
@@ -77,9 +99,9 @@ export class SimplePass {
       method: "get",
       path: `${this.#rootpath}/un`,
       handler: ({ req, res }) => {
-        if (!SimplePass.passed(req)) throw new Error("not passed");
+        if (!SimplePass.passed(req)) throw new Error("Not authorized");
 
-        res.clearCookie(String(COOKIE_NAME));
+        res.clearCookie(COOKIE_NAME);
 
         res.redirect(`${this.#rootpath}?un=true`);
       }
@@ -103,18 +125,19 @@ export class SimplePass {
         const passkey = (req.body as Record<string, unknown>).passkey;
         const redirect = req.query.redirect as string | undefined;
 
-        if (typeof passkey !== "string") throw new Error("passkey is required");
+        if (typeof passkey !== "string") throw new Error("Passkey is required");
 
         if (!(await this.#verify(passkey)))
-          throw new Error("incorrect passkey");
+          throw new Error("Incorrect passkey");
 
-        if (SimplePass.passed(req)) throw new Error("already passed");
+        if (SimplePass.passed(req)) throw new Error("Already authenticated");
 
         res
           .cookie(String(COOKIE_NAME), "true", {
-            httpOnly: true,
             maxAge: 12 * 60 * 60 * 1000,
-            ...this.#cookie
+            ...this.#cookie,
+            httpOnly: true,
+            signed: true
           })
           // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
           .redirect(redirect || "/");
@@ -125,13 +148,13 @@ export class SimplePass {
   #initialize() {
     this.#app.set("view engine", "pug");
     this.#app.use(express.urlencoded({ extended: true }));
-    this.#app.use(cookieparser() as express.RequestHandler);
+    this.#app.use(cookieparser(this.#secret) as express.RequestHandler);
 
     this.#app.use((_req, res, next) => {
       res.locals.rootpath = this.#rootpath;
-
       res.locals.css = this.#css;
       res.locals.title = this.#title;
+      res.locals.labels = this.#labels ?? {};
 
       next();
     });

@@ -6,23 +6,23 @@ block children
 
   div.container
     div
-      h3.title authentication
-      p(style="font-size: 0.875rem; line-height: 1.25rem") enter the pass key to continue
+      h3.title= labels.title || "Authentication"
+      p.instruction(style="font-size: 0.875rem; line-height: 1.25rem")= labels.instruction || "Enter the pass key to continue"
 
     form(method="post", action=`${rootpath}${q}`)
       div
         input#passkey(
           type="password",
           name="passkey",
-          placeholder="enter the pass key",
+          placeholder=labels.passkey_placeholder === undefined ? "Enter the pass key" : labels.passkey_placeholder,
           required,
           autofocus
         )
         if error
           p.message.error= error
         if un
-          p.message.success unpassed
+          p.message.success= labels.unpassed || "Unpassed"
 
       div(style="display: grid; gap: 10px")
-        button(type="submit") submit
-        a.unpass(href=`${rootpath}/un${q}`, style="justify-self: end") unpass
+        button(type="submit") Submit
+        a.unpass(href=`${rootpath}/un${q}`, style="justify-self: end")= labels.unpass || "Unpass"
