@@ -55,6 +55,13 @@ export class SimplePass<T extends PassType> {
       this.#css = path.isAbsolute(css) ? fs.readFileSync(css, "utf-8") : css;
   }
 
+  get unpass() {
+    return {
+      method: "get" as const,
+      path: `${this.#rootpath}/un`
+    };
+  }
+
   static passed(req: express.Request): boolean {
     const cookies = req.signedCookies as undefined | Record<string, any>;
 
@@ -62,8 +69,6 @@ export class SimplePass<T extends PassType> {
       throw new Error(
         "Cookies are undefined. Ensure that the cookie-parser middleware is applied"
       );
-
-    if (!cookies[COOKIE_NAME]) return false;
 
     return cookies[COOKIE_NAME] === "true";
   }
@@ -90,8 +95,8 @@ export class SimplePass<T extends PassType> {
 
   #routes() {
     this.#route({
-      method: "get",
-      path: `${this.#rootpath}/un`,
+      method: this.unpass.method,
+      path: this.unpass.path,
       handler: ({ req, res }) => {
         if (!SimplePass.passed(req)) throw new Error("Not authorized");
 
@@ -150,7 +155,7 @@ export class SimplePass<T extends PassType> {
         }
 
         res
-          .cookie(String(COOKIE_NAME), "true", {
+          .cookie(COOKIE_NAME, "true", {
             maxAge: 12 * 60 * 60 * 1000,
             ...this.#cookie,
             httpOnly: true,

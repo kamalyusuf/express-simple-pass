@@ -47,6 +47,7 @@ import argon2 from "argon2";
 const app = express();
 
 const simplepass = new SimplePass({
+  type: "passkey",
   verify: (passkey) => argon2.verify(process.env.PASS_KEY_HASH, passkey),
   cookie: {
     secret: "superduperlongsecuresecret"
@@ -99,7 +100,10 @@ You can choose between two authentication types:
 ```typescript
 const simplepass = new SimplePass({
   type: "passkey",
-  verify: (passkey) => argon2.verify(process.env.PASS_KEY_HASH, passkey)
+  verify: (passkey) => argon2.verify(process.env.PASS_KEY_HASH, passkey),
+  cookie: {
+    secret: "superduperlongsecret"
+  }
 });
 ```
 
@@ -115,6 +119,9 @@ const simplepass = new SimplePass({
     }).orFail();
 
     return argon2.verify(admin.password_hash, password);
+  },
+  cookie: {
+    secret: "superduperlongsecret"
   }
 });
 ```

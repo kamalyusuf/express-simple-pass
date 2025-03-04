@@ -16,7 +16,7 @@ const simplepass = new SimplePass({
 
 app.use(simplepass.router());
 
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
   res.send("/");
 });
 
